@@ -1,0 +1,156 @@
+{
+  "name": "converter-studio",
+  "displayName": "Converter Studio",
+  "description": "Convert files from the Explorer with Converter Studio: images to WebP or AVIF, HEIC photos to JPG, DOCX to PDF, scanned PDFs to text, and more.",
+  "version": "1.0.0",
+  "publisher": "converterstudio",
+  "author": {
+    "name": "Converter Studio",
+    "email": "support@converter.studio",
+    "url": "https://converter.studio"
+  },
+  "license": "MIT",
+  "homepage": "https://converter.studio/developers",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tariksucu/vscode-converter-studio.git"
+  },
+  "bugs": {
+    "url": "https://github.com/tariksucu/vscode-converter-studio/issues",
+    "email": "support@converter.studio"
+  },
+  "qna": "https://github.com/tariksucu/vscode-converter-studio/issues",
+  "pricing": "Free",
+  "icon": "images/icon.png",
+  "galleryBanner": {
+    "color": "#f2efe8",
+    "theme": "light"
+  },
+  "categories": [
+    "Other"
+  ],
+  "keywords": [
+    "converter studio",
+    "convert",
+    "file converter",
+    "image converter",
+    "webp",
+    "avif",
+    "heic",
+    "jpg",
+    "png",
+    "svg",
+    "pdf",
+    "docx",
+    "ocr",
+    "mp4",
+    "mp3"
+  ],
+  "engines": {
+    "vscode": "^1.90.0"
+  },
+  "extensionKind": [
+    "workspace"
+  ],
+  "capabilities": {
+    "untrustedWorkspaces": {
+      "supported": true
+    },
+    "virtualWorkspaces": true
+  },
+  "activationEvents": [],
+  "main": "./out/src/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "converterStudio.convert",
+        "title": "Convert with Converter Studio…"
+      },
+      {
+        "command": "converterStudio.setApiKey",
+        "title": "Set API Key",
+        "category": "Converter Studio"
+      },
+      {
+        "command": "converterStudio.removeApiKey",
+        "title": "Remove API Key",
+        "category": "Converter Studio"
+      },
+      {
+        "command": "converterStudio.showAccount",
+        "title": "Show Plan and Credits",
+        "category": "Converter Studio"
+      }
+    ],
+    "menus": {
+      "explorer/context": [
+        {
+          "command": "converterStudio.convert",
+          "when": "!explorerResourceIsFolder",
+          "group": "7_converterStudio"
+        }
+      ],
+      "editor/title/context": [
+        {
+          "command": "converterStudio.convert",
+          "when": "resourceScheme != untitled",
+          "group": "7_converterStudio"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "Converter Studio",
+      "properties": {
+        "converterStudio.maxCredits": {
+          "type": "integer",
+          "default": 20,
+          "minimum": 0,
+          "maximum": 100000,
+          "scope": "application",
+          "markdownDescription": "A conversion that costs more credits than this asks before it starts. `0` asks every time. Most images and documents cost 1 credit; long videos cost more ([pricing](https://converter.studio/pricing))."
+        },
+        "converterStudio.existingFiles": {
+          "type": "string",
+          "enum": [
+            "keepBoth",
+            "ask"
+          ],
+          "enumDescriptions": [
+            "Save the result under a new name, such as `photo (1).webp`.",
+            "Ask whether to overwrite the file, keep both or skip."
+          ],
+          "default": "keepBoth",
+          "markdownDescription": "What to do when a file with the result's name is already next to the original. Nothing is ever overwritten without asking."
+        },
+        "converterStudio.apiUrl": {
+          "type": "string",
+          "default": "https://converter.studio/api",
+          "scope": "machine",
+          "markdownDescription": "The Converter Studio API's address. Change it only to use a test server; your API key is sent to this address. It can only be set in user settings, never by a workspace."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run build",
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "lint": "eslint .",
+    "test": "tsc -p tsconfig.json && mocha \"out/test/unit/**/*.test.js\"",
+    "package": "vsce package"
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "@types/mocha": "10.0.10",
+    "@types/node": "20.19.43",
+    "@types/vscode": "1.90.0",
+    "@vscode/test-electron": "3.1.0",
+    "@vscode/vsce": "4.1.0",
+    "eslint": "10.14.0",
+    "globals": "17.14.0",
+    "mocha": "11.8.0",
+    "ovsx": "1.4.0",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.72.2"
+  }
+}

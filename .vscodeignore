@@ -1,0 +1,21 @@
+# Only the compiled extension, its icon and the listing's files go into the package.
+.github/**
+.vscode/**
+.vscode-test/**
+src/**
+test/**
+out/test/**
+**/*.map
+**/*.ts
+tsconfig*.json
+eslint.config.mjs
+.prettierrc.json
+.gitignore
+images/**
+!images/icon.png
+*.vsix
+# Private files of the monorepo (never in the public repository either).
+SUBMISSION.md
+scripts/**
+dev/**
+e2e/**

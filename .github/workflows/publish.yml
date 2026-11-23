@@ -1,0 +1,95 @@
+# Publishes the extension to the Visual Studio Marketplace and to Open VSX when a version tag is
+# pushed. The tag ("X.Y.Z" or "vX.Y.Z") must equal the version in package.json. The job checks that,
+# runs the lint, the type check and the unit tests, packages the extension once, and publishes that
+# same package to both registries. A version already on a registry is skipped, so a failed run can
+# be started again.
+#
+# Authentication:
+# - Visual Studio Marketplace: the repository secret VSCE_PAT (an Azure DevOps personal access
+#   token, organisation "All accessible organizations", scope Marketplace > Manage). Without it,
+#   Marketplace Trusted Publishing (OIDC): on the publisher's Trusted Publishing page, a policy for
+#   owner tariksucu, repository vscode-converter-studio, workflow publish.yml, no environment.
+#   Microsoft is retiring the "all organizations" (global) tokens the Marketplace needs (announced
+#   for 2026-12-01, moved to 2027-01-27), so trusted publishing is the lasting way.
+# - Open VSX: the repository secret OVSX_PAT (an access token from open-vsx.org). Open VSX's
+#   trusted publishing can only take over once the extension exists there: then add a trusted
+#   publisher for this workflow in open-vsx.org's settings and delete OVSX_PAT.
+
+name: Publish
+
+on:
+  push:
+    tags:
+      - '*.*.*'
+
+concurrency:
+  group: publish-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    name: Publish to the Marketplace and Open VSX
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      # OIDC token for trusted publishing.
+      id-token: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'npm'
+
+      - name: Check that the tag is the package version
+        run: |
+          version="$(node -p "require('./package.json').version")"
+          if [ "${GITHUB_REF_NAME#v}" != "$version" ]; then
+            echo "::error::Tag $GITHUB_REF_NAME does not match version $version in package.json"
+            exit 1
+          fi
+
+      # Dependencies' install scripts are not needed, and none runs in a job that can publish.
+      - name: Install dependencies
+        run: 'npm ci --ignore-scripts'
+
+      - name: Lint
+        run: 'npm run lint'
+
+      - name: Type check
+        run: 'npm run typecheck'
+
+      - name: Run tests
+        run: 'npm test'
+
+      - name: Package the extension
+        run: 'npx vsce package --out converter-studio.vsix'
+
+      - name: Publish to the Visual Studio Marketplace
+        run: |
+          if [ -n "$VSCE_PAT" ]; then
+            npx vsce publish --packagePath converter-studio.vsix --skip-duplicate
+          else
+            unset VSCE_PAT
+            npx vsce publish --packagePath converter-studio.vsix --skip-duplicate --oidc
+          fi
+        env:
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}
+
+      - name: Publish to Open VSX
+        run: |
+          if [ -n "$OVSX_PAT" ]; then
+            npx ovsx publish converter-studio.vsix --skip-duplicate
+          else
+            unset OVSX_PAT
+            npx ovsx publish converter-studio.vsix --skip-duplicate --trusted-publishing
+          fi
+        env:
+          OVSX_PAT: ${{ secrets.OVSX_PAT }}
