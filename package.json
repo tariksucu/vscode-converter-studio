@@ -1,8 +1,8 @@
 {
   "name": "converter-studio",
-  "displayName": "Converter Studio",
-  "description": "Convert files from the Explorer with Converter Studio: images to WebP or AVIF, HEIC photos to JPG, DOCX to PDF, scanned PDFs to text, and more.",
-  "version": "1.0.0",
+  "displayName": "Converter Studio File Converter",
+  "description": "Convert files from the Explorer, on your computer first: images to WebP, PNG or JPG, video and audio with FFmpeg, DOCX to PDF with LibreOffice, Markdown with Pandoc, JSON to CSV, OCR. The desktop app and the cloud when you choose them.",
+  "version": "1.1.0",
   "publisher": "converterstudio",
   "author": {
     "name": "Converter Studio",
@@ -34,6 +34,11 @@
     "convert",
     "file converter",
     "image converter",
+    "offline",
+    "ffmpeg",
+    "libreoffice",
+    "pandoc",
+    "imagemagick",
     "webp",
     "avif",
     "heic",
@@ -42,6 +47,10 @@
     "svg",
     "pdf",
     "docx",
+    "markdown",
+    "json",
+    "csv",
+    "yaml",
     "ocr",
     "mp4",
     "mp3"
@@ -54,9 +63,13 @@
   ],
   "capabilities": {
     "untrustedWorkspaces": {
-      "supported": true
+      "supported": "limited",
+      "description": "In Restricted Mode the extension does not run the tools installed on your computer (FFmpeg, LibreOffice, Pandoc, ImageMagick, Ghostscript, Tesseract), not even to read their versions. Its built-in conversions, the desktop app and the cloud still work."
     },
-    "virtualWorkspaces": true
+    "virtualWorkspaces": {
+      "supported": "limited",
+      "description": "In a virtual workspace the tools on your computer and the desktop app cannot read the files; the built-in conversions and the cloud still work."
+    }
   },
   "activationEvents": [],
   "main": "./out/src/extension.js",
@@ -67,8 +80,13 @@
         "title": "Convert with Converter Studio…"
       },
       {
+        "command": "converterStudio.showTools",
+        "title": "Show Tools on This Computer",
+        "category": "Converter Studio"
+      },
+      {
         "command": "converterStudio.setApiKey",
-        "title": "Set API Key",
+        "title": "Set API Key (for the cloud)",
         "category": "Converter Studio"
       },
       {
@@ -101,13 +119,73 @@
     "configuration": {
       "title": "Converter Studio",
       "properties": {
+        "converterStudio.desktopApp.enabled": {
+          "type": "boolean",
+          "default": false,
+          "scope": "application",
+          "markdownDescription": "Use the Converter Studio desktop app when installed. The format picker then offers to hand files to [Converter Studio for desktop](https://converter.studio/download) (0.1.11 or later), which shows them in its Convert tab with the format chosen; you press Convert there. Not in remote windows."
+        },
+        "converterStudio.cloud.enabled": {
+          "type": "boolean",
+          "default": true,
+          "scope": "application",
+          "markdownDescription": "Offer conversions in the cloud. A cloud conversion uploads the file to converter.studio and uses credits of your account; the picker says so on each one, and nothing goes to the cloud unless you choose it. To list the cloud's formats the picker reads Converter Studio's public format list (no file, no key). Off: the extension never contacts converter.studio."
+        },
+        "converterStudio.local.toolPaths": {
+          "type": "object",
+          "default": {},
+          "scope": "machine",
+          "additionalProperties": false,
+          "properties": {
+            "ffmpeg": {
+              "type": "string",
+              "description": "FFmpeg (ffmpeg)"
+            },
+            "soffice": {
+              "type": "string",
+              "description": "LibreOffice (soffice)"
+            },
+            "pandoc": {
+              "type": "string",
+              "description": "Pandoc (pandoc)"
+            },
+            "magick": {
+              "type": "string",
+              "description": "ImageMagick (magick, or convert for ImageMagick 6)"
+            },
+            "gs": {
+              "type": "string",
+              "description": "Ghostscript (gs, gswin64c)"
+            },
+            "tesseract": {
+              "type": "string",
+              "description": "Tesseract (tesseract)"
+            }
+          },
+          "markdownDescription": "Absolute paths of tools installed where the extension does not look (it looks in PATH and the tools' usual install folders). User settings only: a workspace cannot point the extension at a program."
+        },
+        "converterStudio.local.timeoutMinutes": {
+          "type": "integer",
+          "default": 30,
+          "minimum": 1,
+          "maximum": 1440,
+          "scope": "application",
+          "markdownDescription": "A conversion on this computer that takes longer than this is stopped."
+        },
+        "converterStudio.local.ocrLanguages": {
+          "type": "string",
+          "default": "eng",
+          "pattern": "^[\\w/-]+(\\+[\\w/-]+)*$",
+          "scope": "application",
+          "markdownDescription": "The languages Tesseract reads text in on this computer, joined by `+` (`eng`, `eng+deu`, `fra`). Each needs its Tesseract language data installed."
+        },
         "converterStudio.maxCredits": {
           "type": "integer",
           "default": 20,
           "minimum": 0,
           "maximum": 100000,
           "scope": "application",
-          "markdownDescription": "A conversion that costs more credits than this asks before it starts. `0` asks every time. Most images and documents cost 1 credit; long videos cost more ([pricing](https://converter.studio/pricing))."
+          "markdownDescription": "In the cloud: a conversion that costs more credits than this asks before it starts. `0` asks every time. Most images and documents cost 1 credit; long videos cost more ([pricing](https://converter.studio/pricing))."
         },
         "converterStudio.existingFiles": {
           "type": "string",
@@ -120,13 +198,13 @@
             "Ask whether to overwrite the file, keep both or skip."
           ],
           "default": "keepBoth",
-          "markdownDescription": "What to do when a file with the result's name is already next to the original. Nothing is ever overwritten without asking."
+          "markdownDescription": "What to do when a file with the result's name is already next to the original (on this computer and from the cloud). Nothing is ever overwritten without asking."
         },
         "converterStudio.apiUrl": {
           "type": "string",
           "default": "https://converter.studio/api",
           "scope": "machine",
-          "markdownDescription": "The Converter Studio API's address. Change it only to use a test server; your API key is sent to this address. It can only be set in user settings, never by a workspace."
+          "markdownDescription": "The Converter Studio API's address, for the cloud. Change it only to use a test server; your API key is sent to this address. It can only be set in user settings, never by a workspace."
         }
       }
     }

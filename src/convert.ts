@@ -74,7 +74,7 @@ export interface ConvertDeps<F> {
 }
 
 export type Outcome<F> =
-  | { status: 'converted'; file: F; result: F; credits: number }
+  | { status: 'converted'; file: F; result: F; credits: number; engine?: string }
   | { status: 'failed'; file: F; error: ConverterStudioError }
   | { status: 'skipped'; file: F; error: ConverterStudioError };
 
@@ -184,8 +184,12 @@ async function* counted(
  * Saves a result next to the original, never over another file without asking: a taken name gets
  * a number, or (`existingFiles: ask`) the user chooses.
  */
-async function save<F>(
-  deps: ConvertDeps<F>,
+export async function save<F>(
+  deps: {
+    files: FileAccess<F>;
+    questions: Pick<Questions, 'existing'>;
+    settings: Pick<ConvertSettings, 'existingFiles'>;
+  },
   original: F,
   wanted: string,
   input: { body: AsyncIterable<Uint8Array>; signal: AbortSignal },

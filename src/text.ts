@@ -53,17 +53,25 @@ export interface DescribedOutcome {
   /** The saved result's URI. */
   result?: string;
   credits?: number;
+  /** What converted it on this computer (`FFmpeg`, `built in`). */
+  engine?: string;
   code?: string;
   message?: string;
 }
 
-/** What `converterStudio.convert` returns: each file's outcome, the credits used and a sentence. */
+/**
+ * What `converterStudio.convert` returns: where it ran, each file's outcome, the credits used
+ * and a sentence.
+ */
 export interface ConvertSummary {
+  where: 'local' | 'desktop' | 'cloud';
   converted: DescribedOutcome[];
   failed: DescribedOutcome[];
   skipped: DescribedOutcome[];
   credits: number;
   message: string;
+  /** The links handed to the desktop app. */
+  links?: string[];
 }
 
 /** The last part of a URI's path. */
@@ -77,20 +85,27 @@ export function uriName(uri: string): string {
   }
 }
 
-export function summary(outcomes: DescribedOutcome[]): ConvertSummary {
+export function summary(
+  outcomes: DescribedOutcome[],
+  where: 'local' | 'cloud' = 'cloud',
+): ConvertSummary {
   const converted = outcomes.filter((o) => o.status === 'converted');
   const failed = outcomes.filter((o) => o.status === 'failed');
   const skipped = outcomes.filter((o) => o.status === 'skipped');
   const credits = converted.reduce((sum, o) => sum + (o.credits ?? 0), 0);
+  const engines = [...new Set(converted.map((o) => o.engine).filter(Boolean))];
+  const how =
+    where === 'local'
+      ? `on this computer${engines.length === 1 ? ` (${engines[0]})` : ''}`
+      : `(${creditsText(credits)})`;
   const parts: string[] = [];
   if (converted.length === 1 && outcomes.length === 1)
     parts.push(
-      `Converted ${uriName(converted[0]!.source)} to ${uriName(converted[0]!.result ?? '')} (${creditsText(credits)}).`,
+      `Converted ${uriName(converted[0]!.source)} to ${uriName(converted[0]!.result ?? '')} ${how}.`,
     );
-  else if (converted.length > 0)
-    parts.push(`Converted ${filesText(converted.length)} (${creditsText(credits)}).`);
+  else if (converted.length > 0) parts.push(`Converted ${filesText(converted.length)} ${how}.`);
   else parts.push('Nothing was converted.');
   if (failed.length > 0) parts.push(`${filesText(failed.length)} not converted.`);
   if (skipped.length > 0) parts.push(`${filesText(skipped.length)} skipped.`);
-  return { converted, failed, skipped, credits, message: parts.join(' ') };
+  return { where, converted, failed, skipped, credits, message: parts.join(' ') };
 }

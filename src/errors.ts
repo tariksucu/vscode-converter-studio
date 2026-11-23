@@ -34,6 +34,30 @@ export const EXTENSION_ERROR_CODES = [
   'writeFailed',
   /** A file with the result's name exists and the user chose to skip it. */
   'skipped',
+  /** Nothing on this computer converts this file to the chosen format. */
+  'noLocalConversion',
+  /** The workspace is not trusted, so the tools on this computer are not run. */
+  'untrustedWorkspace',
+  /** The file is not on disk (a virtual file system), and a tool needs a path. */
+  'notOnDisk',
+  /** The tool could not be started. */
+  'toolMissing',
+  /** The tool ran but did not make the result. */
+  'toolFailed',
+  /** The tool did not finish in time and was stopped. */
+  'toolTimeout',
+  /** A smaller file was asked for, and the result was not smaller. */
+  'notSmaller',
+  /** The data file could not be read as its format. */
+  'invalidData',
+  /** The image could not be read or written by the editor's image decoder. */
+  'imageUnreadable',
+  /** The file is too large for the extension's own conversions. */
+  'tooLarge',
+  /** The Converter Studio desktop app cannot be used here. */
+  'desktopUnavailable',
+  /** Conversions in the cloud are turned off in the settings. */
+  'cloudOff',
   /** Anything else. */
   'unknown',
 ] as const;
@@ -56,6 +80,19 @@ export const ERROR_TEXT: Record<ExtensionErrorCode, string> = {
   resultDownloadFailed: 'The converted file could not be downloaded from Converter Studio.',
   writeFailed: 'The converted file could not be saved.',
   skipped: 'Skipped: a file with that name already exists.',
+  noLocalConversion: 'Nothing on this computer converts this file to the chosen format.',
+  untrustedWorkspace:
+    'The tools on this computer are not run in Restricted Mode (an untrusted workspace).',
+  notOnDisk: 'The file is not on disk, so the tools on this computer cannot read it.',
+  toolMissing: 'The conversion tool could not be started.',
+  toolFailed: 'The conversion tool did not make the result.',
+  toolTimeout: 'The conversion tool did not finish in time and was stopped.',
+  notSmaller: 'Not saved: the result was not smaller than the original.',
+  invalidData: 'The file could not be read.',
+  imageUnreadable: 'The image could not be converted by the editor.',
+  tooLarge: 'The file is too large for the extension to convert itself.',
+  desktopUnavailable: 'The Converter Studio desktop app cannot be used here.',
+  cloudOff: 'Conversions in the cloud are turned off (converterStudio.cloud.enabled).',
   unknown: 'Something went wrong.',
 };
 
