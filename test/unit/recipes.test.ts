@@ -96,7 +96,14 @@ describe('engineFor: what converts on this computer', () => {
     assert.equal(engineFor('docx', 'md', null, caps(all)), 'pandoc');
     assert.equal(engineFor('html', 'epub', null, caps(all)), 'pandoc');
     assert.equal(engineFor('docx', 'odt', null, caps({ pandoc: all.pandoc })), 'pandoc');
-    assert.equal(engineFor('md', 'pdf', null, caps(all)), null, 'Pandoc needs LaTeX for PDF');
+  });
+
+  it('makes a PDF of Markdown with Pandoc and LibreOffice together (no LaTeX)', () => {
+    assert.equal(engineFor('md', 'pdf', null, caps(all)), 'pandoc+soffice');
+    assert.equal(engineFor('md', 'pdf', null, caps({ pandoc: all.pandoc })), null);
+    assert.equal(engineFor('md', 'pdf', null, caps({ soffice: all.soffice })), null);
+    const targets = localTargets(['md'], caps(all), [true]);
+    assert.equal(targets.find((t) => t.to === 'pdf')?.engine, 'Pandoc + LibreOffice');
   });
 
   it('uses FFmpeg only with the encoder the target needs', () => {
@@ -299,5 +306,37 @@ describe('command lines', () => {
     assert.deepEqual(plan.output, { onlyFileIn: '/tmp/cs-1/out' });
     const pandoc = planFor('pandoc', job({ input: '/w/docs/a.md', from: 'md', to: 'docx' }), all);
     assert.equal((pandoc.steps[0] as { cwd?: string }).cwd, '/w/docs', 'relative images are found');
+  });
+
+  it('Markdown to PDF: Pandoc writes a Word file, LibreOffice makes the PDF of it', () => {
+    const plan = planFor(
+      'pandoc+soffice',
+      job({ input: '/w/docs/README.md', from: 'md', to: 'pdf', title: 'README' }),
+      all,
+    );
+    assert.deepEqual(plan.steps[0], { makeFolder: '/tmp/cs-1/docx' });
+    assert.deepEqual(plan.steps[1], {
+      tool: 'pandoc',
+      args: [
+        '--from',
+        'gfm',
+        '--to',
+        'docx',
+        '--output',
+        '/tmp/cs-1/docx/README.docx',
+        '/w/docs/README.md',
+      ],
+      cwd: '/w/docs',
+    });
+    const office = plan.steps[2] as { tool: string; args: string[] };
+    assert.equal(office.tool, 'soffice');
+    assert.deepEqual(office.args.slice(-5), [
+      '--convert-to',
+      'pdf',
+      '--outdir',
+      '/tmp/cs-1/out',
+      '/tmp/cs-1/docx/README.docx',
+    ]);
+    assert.deepEqual(plan.output, { onlyFileIn: '/tmp/cs-1/out' });
   });
 });

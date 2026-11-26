@@ -14,10 +14,11 @@ import {
   type Capabilities,
   type Engine,
   type LocalTarget,
+  type ToolEngine,
   type Variant,
 } from './recipes';
 import { runTool, toolMessage, type RunResult, type Runner } from './run';
-import { TOOL_NAMES, type ToolId } from './tools';
+import { TOOL_NAMES } from './tools';
 
 /**
  * Converting files on this computer: with the extension's own code or a tool installed here.
@@ -95,12 +96,12 @@ export function whyNotLocal(
     if (!context.trusted)
       return new ConverterStudioError(
         'untrustedWorkspace',
-        `${TOOL_NAMES[could]} would convert it, but tools on this computer do not run in Restricted Mode. Trust the workspace to use them.`,
+        `${ENGINE_NAMES[could]} would convert it, but tools on this computer do not run in Restricted Mode. Trust the workspace to use them.`,
       );
     if (!context.onDisk)
       return new ConverterStudioError(
         'notOnDisk',
-        `${TOOL_NAMES[could]} needs a file on disk; this one is in a virtual file system.`,
+        `${ENGINE_NAMES[could]} needs a file on disk; this one is in a virtual file system.`,
       );
     return new ConverterStudioError(
       'noLocalConversion',
@@ -113,12 +114,13 @@ export function whyNotLocal(
   );
 }
 
-function toolHint(tool: ToolId, from: string, to: string, variant: Variant | null): string {
+function toolHint(tool: ToolEngine, from: string, to: string, variant: Variant | null): string {
   if (variant === 'ocr' && from === 'pdf') return 'Tesseract and Ghostscript would';
+  if (tool === 'pandoc+soffice') return 'Pandoc and LibreOffice together would';
   if (tool === 'magick' && (from === 'heic' || to === 'heic'))
     return 'ImageMagick built with HEIC support (libheif) would';
   if (tool === 'ffmpeg') return 'FFmpeg (with the right encoder) would';
-  return `${TOOL_NAMES[tool]} would`;
+  return `${ENGINE_NAMES[tool]} would`;
 }
 
 /** One lock per key: LibreOffice runs one conversion at a time with its profile. */
@@ -204,7 +206,7 @@ export async function convertHere<F>(
     if (bytes.byteLength === 0) throw new ConverterStudioError('sourceEmpty');
     const out =
       engine === 'data'
-        ? new TextEncoder().encode(convertData(from, target.to, new TextDecoder().decode(bytes)))
+        ? new TextEncoder().encode(convertData(from, target.to, utf8(bytes, name)))
         : await deps.canvas!(bytes, from, target.to, signal);
     if (signal.aborted) throw new ConverterStudioError('canceled');
     stage('saving');
@@ -272,7 +274,8 @@ export async function convertHere<F>(
           );
       }
     };
-    if (engine === 'soffice') await oneAtATime(deps.profile, runSteps);
+    if (engine === 'soffice' || engine === 'pandoc+soffice')
+      await oneAtATime(deps.profile, runSteps);
     else await runSteps();
 
     const output =
@@ -286,7 +289,7 @@ export async function convertHere<F>(
     if (!output || size === 0)
       throw new ConverterStudioError(
         'toolFailed',
-        `${TOOL_NAMES[engine]} made no result from ${name}${detail(last)}`,
+        `${ENGINE_NAMES[engine]} made no result from ${name}${detail(last)}`,
       );
     if (target.variant === 'compress') {
       const original = await files.size(file);
@@ -301,6 +304,21 @@ export async function convertHere<F>(
     return { result, engine };
   } finally {
     await fsp.rm(work, { recursive: true, force: true }).catch(() => undefined);
+  }
+}
+
+/**
+ * A data file's text. Bytes that are not UTF-8 stop the conversion: read as UTF-8 they would turn
+ * into U+FFFD replacement characters, and the result would hold changed data.
+ */
+function utf8(bytes: Uint8Array, name: string): string {
+  try {
+    return new TextDecoder('utf-8', { fatal: true }).decode(bytes);
+  } catch {
+    throw new ConverterStudioError(
+      'invalidData',
+      `${name} is not UTF-8 text, so the extension would change some of its characters. Save it as UTF-8 and convert it again.`,
+    );
   }
 }
 

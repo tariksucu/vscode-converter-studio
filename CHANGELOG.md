@@ -1,5 +1,26 @@
 # Changelog
 
+## 1.1.1
+
+- **Markdown to PDF on this computer.** With Pandoc and LibreOffice installed, Pandoc writes a Word
+  file and LibreOffice makes the PDF of it (no LaTeX needed), as the JetBrains and Sublime Text
+  plugins do. Before, Markdown to PDF was offered only in the cloud, for credits. The cloud stays a
+  choice of its own in the picker.
+- **The built-in data conversions no longer lose or change data.**
+  - CSV to JSON: every column gets a name of its own, checked against every other name. A header
+    `column2` with a row of two cells kept only one of them, and `id,id,id_2` lost a value; now
+    they give `column2_2` and `id_3`. Every object has every column (a cell a row does not have is
+    empty; before, a column beyond the header was in the rows that had it only).
+  - JSON to CSV and YAML: numbers are written as the file writes them. JavaScript's number type
+    changed 9007199254740993 into 9007199254740992 and 1.50 into 1.5; 1e5 now stays 1e5. Keys keep
+    their order (keys such as `"1"` moved to the front) and a key `__proto__` is kept.
+  - YAML escapes the control characters, DEL and the line and paragraph separators, which some
+    YAML readers refuse or read as line breaks.
+  - A data file that is not UTF-8 stops with a message, instead of getting replacement characters.
+- The CSV separator is the one the first line uses most outside quotes: comma, semicolon, tab or
+  `|` (new), skipping blank lines before the header.
+- The four editor plugins (VS Code, JetBrains, Sublime Text, Neovim) now follow the same rules and run the same test cases, so a file gives the same result in each.
+
 ## 1.1.0
 
 Converts on your computer first.

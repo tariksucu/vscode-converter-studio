@@ -1,0 +1,341 @@
+{
+  "about": "The same data-conversion cases for the four Converter Studio editor plugins (VS Code, JetBrains, Sublime Text, Neovim). Each plugin runs the cases of the pairs it has and must write exactly `output`, or refuse the file when `error` is true. Keep this file the same in all four.",
+  "cases": [
+    {
+      "name": "a header named column2, and a row with one more cell",
+      "from": "csv",
+      "to": "json",
+      "input": "column2\nA,B\n",
+      "output": "[\n  {\n    \"column2\": \"A\",\n    \"column2_2\": \"B\"\n  }\n]\n"
+    },
+    {
+      "name": "a header named column2, and a row with one more cell",
+      "from": "csv",
+      "to": "yaml",
+      "input": "column2\nA,B\n",
+      "output": "- column2: A\n  column2_2: B\n"
+    },
+    {
+      "name": "a header written twice",
+      "from": "csv",
+      "to": "json",
+      "input": "id,id\n1,2\n",
+      "output": "[\n  {\n    \"id\": \"1\",\n    \"id_2\": \"2\"\n  }\n]\n"
+    },
+    {
+      "name": "a header written twice",
+      "from": "csv",
+      "to": "yaml",
+      "input": "id,id\n1,2\n",
+      "output": "- id: \"1\"\n  id_2: \"2\"\n"
+    },
+    {
+      "name": "a repeated header whose next name another column already has",
+      "from": "csv",
+      "to": "json",
+      "input": "id,id,id_2\n1,2,3\n",
+      "output": "[\n  {\n    \"id\": \"1\",\n    \"id_3\": \"2\",\n    \"id_2\": \"3\"\n  }\n]\n"
+    },
+    {
+      "name": "a repeated header whose next name another column already has",
+      "from": "csv",
+      "to": "yaml",
+      "input": "id,id,id_2\n1,2,3\n",
+      "output": "- id: \"1\"\n  id_3: \"2\"\n  id_2: \"3\"\n"
+    },
+    {
+      "name": "an empty header cell, and spaces around names",
+      "from": "csv",
+      "to": "json",
+      "input": "a, , c \n1,2,3\n",
+      "output": "[\n  {\n    \"a\": \"1\",\n    \"column2\": \"2\",\n    \"c\": \"3\"\n  }\n]\n"
+    },
+    {
+      "name": "an empty header cell, and spaces around names",
+      "from": "csv",
+      "to": "yaml",
+      "input": "a, , c \n1,2,3\n",
+      "output": "- a: \"1\"\n  column2: \"2\"\n  c: \"3\"\n"
+    },
+    {
+      "name": "rows longer and shorter than the header",
+      "from": "csv",
+      "to": "json",
+      "input": "a,b\n1,2,3\n4\n",
+      "output": "[\n  {\n    \"a\": \"1\",\n    \"b\": \"2\",\n    \"column3\": \"3\"\n  },\n  {\n    \"a\": \"4\",\n    \"b\": \"\",\n    \"column3\": \"\"\n  }\n]\n"
+    },
+    {
+      "name": "rows longer and shorter than the header",
+      "from": "csv",
+      "to": "yaml",
+      "input": "a,b\n1,2,3\n4\n",
+      "output": "- a: \"1\"\n  b: \"2\"\n  column3: \"3\"\n- a: \"4\"\n  b: \"\"\n  column3: \"\"\n"
+    },
+    {
+      "name": "a name made for an extra cell that the header already has",
+      "from": "csv",
+      "to": "json",
+      "input": "a,column3\n1,2,3\n",
+      "output": "[\n  {\n    \"a\": \"1\",\n    \"column3\": \"2\",\n    \"column3_2\": \"3\"\n  }\n]\n"
+    },
+    {
+      "name": "a name made for an extra cell that the header already has",
+      "from": "csv",
+      "to": "yaml",
+      "input": "a,column3\n1,2,3\n",
+      "output": "- a: \"1\"\n  column3: \"2\"\n  column3_2: \"3\"\n"
+    },
+    {
+      "name": "large numbers in a CSV stay text with every digit",
+      "from": "csv",
+      "to": "json",
+      "input": "id,n\n9007199254740993,-9007199254740993\n",
+      "output": "[\n  {\n    \"id\": \"9007199254740993\",\n    \"n\": \"-9007199254740993\"\n  }\n]\n"
+    },
+    {
+      "name": "large numbers in a CSV stay text with every digit",
+      "from": "csv",
+      "to": "yaml",
+      "input": "id,n\n9007199254740993,-9007199254740993\n",
+      "output": "- id: \"9007199254740993\"\n  \"n\": \"-9007199254740993\"\n"
+    },
+    {
+      "name": "a quoted field with a comma, a line break and quotes",
+      "from": "csv",
+      "to": "json",
+      "input": "name,note\r\nAda,\"Hello, world\nsecond \"\"line\"\"\"\r\n",
+      "output": "[\n  {\n    \"name\": \"Ada\",\n    \"note\": \"Hello, world\\nsecond \\\"line\\\"\"\n  }\n]\n"
+    },
+    {
+      "name": "a quoted field with a comma, a line break and quotes",
+      "from": "csv",
+      "to": "yaml",
+      "input": "name,note\r\nAda,\"Hello, world\nsecond \"\"line\"\"\"\r\n",
+      "output": "- name: Ada\n  note: \"Hello, world\\nsecond \\\"line\\\"\"\n"
+    },
+    {
+      "name": "a CSV separated by semicolons",
+      "from": "csv",
+      "to": "json",
+      "input": "a;b\n1,5;2\n",
+      "output": "[\n  {\n    \"a\": \"1,5\",\n    \"b\": \"2\"\n  }\n]\n"
+    },
+    {
+      "name": "a CSV separated by semicolons",
+      "from": "csv",
+      "to": "yaml",
+      "input": "a;b\n1,5;2\n",
+      "output": "- a: \"1,5\"\n  b: \"2\"\n"
+    },
+    {
+      "name": "a separator inside quotes on the first line does not count",
+      "from": "csv",
+      "to": "json",
+      "input": "\"a;b\",c\n1,2\n",
+      "output": "[\n  {\n    \"a;b\": \"1\",\n    \"c\": \"2\"\n  }\n]\n"
+    },
+    {
+      "name": "tab-separated",
+      "from": "csv",
+      "to": "json",
+      "input": "a\tb\n1\t2,5\n",
+      "output": "[\n  {\n    \"a\": \"1\",\n    \"b\": \"2,5\"\n  }\n]\n"
+    },
+    {
+      "name": "keys keep their order and their names (1, __proto__)",
+      "from": "csv",
+      "to": "json",
+      "input": "b,1,__proto__\nx,y,z\n",
+      "output": "[\n  {\n    \"b\": \"x\",\n    \"1\": \"y\",\n    \"__proto__\": \"z\"\n  }\n]\n"
+    },
+    {
+      "name": "keys keep their order and their names (1, __proto__)",
+      "from": "csv",
+      "to": "yaml",
+      "input": "b,1,__proto__\nx,y,z\n",
+      "output": "- b: x\n  \"1\": \"y\"\n  __proto__: z\n"
+    },
+    {
+      "name": "blank lines are not records, and a byte order mark is not part of the first name",
+      "from": "csv",
+      "to": "json",
+      "input": "\ufeffa,b\r\n\r\n1,2\r\n\r\n",
+      "output": "[\n  {\n    \"a\": \"1\",\n    \"b\": \"2\"\n  }\n]\n"
+    },
+    {
+      "name": "control characters in values are escaped as JSON and YAML need",
+      "from": "csv",
+      "to": "json",
+      "input": "a\n\"x\u0001\b\f\u007f\u2028y\"\n",
+      "output": "[\n  {\n    \"a\": \"x\\u0001\\b\\f\u007f\u2028y\"\n  }\n]\n"
+    },
+    {
+      "name": "control characters in values are escaped as JSON and YAML need",
+      "from": "csv",
+      "to": "yaml",
+      "input": "a\n\"x\u0001\b\f\u007f\u2028y\"\n",
+      "output": "- a: \"x\\u0001\\u0008\\u000c\\u007f\\u2028y\"\n"
+    },
+    {
+      "name": "a header without rows",
+      "from": "csv",
+      "to": "json",
+      "input": "a,b\n",
+      "output": "[]\n"
+    },
+    {
+      "name": "a header without rows",
+      "from": "csv",
+      "to": "yaml",
+      "input": "a,b\n",
+      "output": "[]\n"
+    },
+    {
+      "name": "an empty CSV is refused",
+      "from": "csv",
+      "to": "json",
+      "input": "\n\n",
+      "error": true
+    },
+    {
+      "name": "an empty CSV is refused",
+      "from": "csv",
+      "to": "yaml",
+      "input": "\n\n",
+      "error": true
+    },
+    {
+      "name": "a quote that never ends is refused",
+      "from": "csv",
+      "to": "json",
+      "input": "a,b\n1,\"2\n",
+      "error": true
+    },
+    {
+      "name": "large and exact numbers keep their digits",
+      "from": "json",
+      "to": "csv",
+      "input": "[{\"big\": 9007199254740993, \"neg\": -9007199254740993, \"pi\": 3.14159265358979323846, \"one\": 1.0, \"exp\": 1E400, \"list\": [9007199254740993, 2.50]}]",
+      "output": "big,neg,pi,one,exp,list\r\n9007199254740993,-9007199254740993,3.14159265358979323846,1.0,1E400,\"[9007199254740993,2.50]\"\r\n"
+    },
+    {
+      "name": "large and exact numbers keep their digits",
+      "from": "json",
+      "to": "yaml",
+      "input": "[{\"big\": 9007199254740993, \"neg\": -9007199254740993, \"pi\": 3.14159265358979323846, \"one\": 1.0, \"exp\": 1E400, \"list\": [9007199254740993, 2.50]}]",
+      "output": "- big: 9007199254740993\n  neg: -9007199254740993\n  pi: 3.14159265358979323846\n  one: 1.0\n  exp: 1E400\n  list:\n    - 9007199254740993\n    - 2.50\n"
+    },
+    {
+      "name": "a large number alone",
+      "from": "json",
+      "to": "yaml",
+      "input": "-9007199254740993",
+      "output": "-9007199254740993\n"
+    },
+    {
+      "name": "text with commas, quotes, line breaks and spaces at the ends; null and booleans",
+      "from": "json",
+      "to": "csv",
+      "input": "[{\"name\": \"Ada\", \"note\": \"Hello, world\\nsecond \\\"line\\\"\", \"padded\": \" x \", \"ok\": true, \"none\": null}]",
+      "output": "name,note,padded,ok,none\r\nAda,\"Hello, world\nsecond \"\"line\"\"\",\" x \",true,\r\n"
+    },
+    {
+      "name": "text with commas, quotes, line breaks and spaces at the ends; null and booleans",
+      "from": "json",
+      "to": "yaml",
+      "input": "[{\"name\": \"Ada\", \"note\": \"Hello, world\\nsecond \\\"line\\\"\", \"padded\": \" x \", \"ok\": true, \"none\": null}]",
+      "output": "- name: Ada\n  note: \"Hello, world\\nsecond \\\"line\\\"\"\n  padded: \" x \"\n  ok: true\n  none: null\n"
+    },
+    {
+      "name": "keys keep the order they are written in",
+      "from": "json",
+      "to": "csv",
+      "input": "[{\"b\": 1, \"2\": 2, \"a\": 3, \"__proto__\": 4}]",
+      "output": "b,2,a,__proto__\r\n1,2,3,4\r\n"
+    },
+    {
+      "name": "keys keep the order they are written in",
+      "from": "json",
+      "to": "yaml",
+      "input": "[{\"b\": 1, \"2\": 2, \"a\": 3, \"__proto__\": 4}]",
+      "output": "- b: 1\n  \"2\": 2\n  a: 3\n  __proto__: 4\n"
+    },
+    {
+      "name": "rows with different keys: all of them, in the order first seen",
+      "from": "json",
+      "to": "csv",
+      "input": "[{\"a\": 1}, {\"b\": 2, \"a\": 3}]",
+      "output": "a,b\r\n1,\r\n3,2\r\n"
+    },
+    {
+      "name": "rows with different keys: all of them, in the order first seen",
+      "from": "json",
+      "to": "yaml",
+      "input": "[{\"a\": 1}, {\"b\": 2, \"a\": 3}]",
+      "output": "- a: 1\n- b: 2\n  a: 3\n"
+    },
+    {
+      "name": "lists in a cell are written as compact JSON",
+      "from": "json",
+      "to": "csv",
+      "input": "[{\"tags\": [\"x\", \"y,z\"], \"n\": [1.50, null, true]}]",
+      "output": "tags,n\r\n\"[\"\"x\"\",\"\"y,z\"\"]\",\"[1.50,null,true]\"\r\n"
+    },
+    {
+      "name": "one object is one row",
+      "from": "json",
+      "to": "csv",
+      "input": "{\"a\": 1, \"b\": \"x\"}",
+      "output": "a,b\r\n1,x\r\n"
+    },
+    {
+      "name": "one object is one row",
+      "from": "json",
+      "to": "yaml",
+      "input": "{\"a\": 1, \"b\": \"x\"}",
+      "output": "a: 1\nb: x\n"
+    },
+    {
+      "name": "an empty array",
+      "from": "json",
+      "to": "csv",
+      "input": "[]",
+      "error": true
+    },
+    {
+      "name": "an empty array",
+      "from": "json",
+      "to": "yaml",
+      "input": "[]",
+      "output": "[]\n"
+    },
+    {
+      "name": "YAML quotes what it would read as something else, and escapes what it cannot hold",
+      "from": "json",
+      "to": "yaml",
+      "input": "{\"yes\": \"no\", \"num\": \"42\", \"dash\": \"-a\", \"colon\": \"a: b\", \"hash\": \"a #b\", \"trail\": \"a \", \"unicode\": \"\\u015eehir \\u0130stanbul\", \"symbols\": \"Ada (admin) @home\", \"controls\": \"a\\u007fb\\u2028c\\td\\u0001\", \"empty\": \"\", \"nested\": {\"deep\": [[1, 2], {}]}}",
+      "output": "\"yes\": \"no\"\nnum: \"42\"\ndash: \"-a\"\ncolon: \"a: b\"\nhash: \"a #b\"\ntrail: \"a \"\nunicode: \u015eehir \u0130stanbul\nsymbols: Ada (admin) @home\ncontrols: \"a\\u007fb\\u2028c\\td\\u0001\"\nempty: \"\"\nnested:\n  deep:\n    - - 1\n      - 2\n    - {}\n"
+    },
+    {
+      "name": "a key that starts with a no-break space keeps it, also after a list's dash",
+      "from": "json",
+      "to": "yaml",
+      "input": "[{\"\\u00a0k\": 1}]",
+      "output": "- \u00a0k: 1\n"
+    },
+    {
+      "name": "invalid JSON is refused",
+      "from": "json",
+      "to": "csv",
+      "input": "{\"a\": 1,}",
+      "error": true
+    },
+    {
+      "name": "invalid JSON is refused",
+      "from": "json",
+      "to": "yaml",
+      "input": "{\"a\": 1,}",
+      "error": true
+    }
+  ]
+}

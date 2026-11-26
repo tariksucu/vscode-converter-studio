@@ -54,6 +54,7 @@ const tools: Toolbox = {
     encoders: new Set(['libx264', 'aac', 'libmp3lame']),
   },
   soffice: { id: 'soffice', path: '/usr/bin/soffice', version: '24.2' },
+  pandoc: { id: 'pandoc', path: '/usr/bin/pandoc', version: '3.1' },
   gs: { id: 'gs', path: '/usr/bin/gs', version: '10.02' },
   tesseract: {
     id: 'tesseract',
@@ -228,6 +229,46 @@ describe('convertAllHere', () => {
     assert.match(messageOf(failed), /made no result.*could not be loaded/);
   });
 
+  it('makes a PDF of Markdown: Pandoc writes a Word file, LibreOffice prints it', async () => {
+    const md = file('notes.md', '# Notes');
+    const { run, calls } = runner((call) => {
+      if (call.file === '/usr/bin/pandoc')
+        return { write: [call.args[call.args.indexOf('--output') + 1]!, 'DOCX'] };
+      const docx = call.args.at(-1)!;
+      assert.equal(readFileSync(docx, 'utf8'), 'DOCX', 'LibreOffice gets what Pandoc wrote');
+      const outdir = call.args[call.args.indexOf('--outdir') + 1]!;
+      return { write: [join(outdir, 'notes.pdf'), '%PDF-'] };
+    });
+    const d = deps([md], { run });
+    const t = target(d, 'pdf');
+    assert.equal(t.engine, 'Pandoc + LibreOffice');
+    const [outcome] = await go(d, [md], t);
+    assert.equal(outcome!.status, 'converted', JSON.stringify(outcome));
+    assert.equal(engineOf(outcome), 'Pandoc + LibreOffice');
+    assert.deepEqual(
+      calls.map((call) => call.file),
+      ['/usr/bin/pandoc', '/usr/bin/soffice'],
+    );
+    assert.equal(calls[0]!.options.cwd, work, 'Pandoc finds the relative images');
+    assert.equal(readFileSync(join(work, 'notes.pdf'), 'utf8'), '%PDF-');
+    assert.deepEqual(readdirSync(work).sort(), ['notes.md', 'notes.pdf']);
+    assert.ok(folders.every((folder) => !existsSync(folder)));
+  });
+
+  it('says which tools would make a PDF of Markdown when one of them is missing', async () => {
+    const md = file('notes.md', '# Notes');
+    const d = deps([md], {}, { tools: { pandoc: tools.pandoc! }, canvas: false });
+    const [outcome] = await go(d, [md], {
+      to: 'pdf',
+      variant: null,
+      label: 'PDF',
+      engine: '',
+      files: [0],
+    });
+    assert.equal(codeOf(outcome), 'noLocalConversion');
+    assert.match(messageOf(outcome), /Pandoc and LibreOffice together would/);
+  });
+
   it('keeps a smaller PDF only when it is smaller', async () => {
     const pdf = file('scan.pdf', 'x'.repeat(100));
     const output = (call: Call) => call.args.find((a) => a.startsWith('-sOutputFile='))!.slice(13);
@@ -336,6 +377,19 @@ describe('convertAllHere', () => {
     assert.equal(engineOf(outcome), 'built in');
     assert.deepEqual(seen, ['PNG png>webp']);
     assert.equal(readFileSync(join(work, 'logo.webp'), 'utf8'), 'WEBP');
+  });
+
+  it('refuses data that is not UTF-8 instead of changing its characters', async () => {
+    const csv = join(work, 'latin1.csv');
+    writeFileSync(
+      csv,
+      Buffer.from([0x63, 0x69, 0x74, 0x79, 0x0a, 0x4d, 0xfc, 0x6e, 0x63, 0x68, 0x0a]),
+    );
+    const d = deps([csv]);
+    const [outcome] = await go(d, [csv], target(d, 'json'));
+    assert.equal(codeOf(outcome), 'invalidData');
+    assert.match(messageOf(outcome), /latin1\.csv is not UTF-8 text/);
+    assert.deepEqual(readdirSync(work), ['latin1.csv']);
   });
 
   it('reports data that cannot be read', async () => {

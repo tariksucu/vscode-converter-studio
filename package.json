@@ -2,7 +2,7 @@
   "name": "converter-studio",
   "displayName": "Converter Studio File Converter",
   "description": "Convert files from the Explorer, on your computer first: images to WebP, PNG or JPG, video and audio with FFmpeg, DOCX to PDF with LibreOffice, Markdown with Pandoc, JSON to CSV, OCR. The desktop app and the cloud when you choose them.",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "publisher": "converterstudio",
   "author": {
     "name": "Converter Studio",

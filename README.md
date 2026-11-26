@@ -26,20 +26,23 @@ A conversion that fails on this computer is never sent to the cloud by itself; t
 
 **Built in**, with no tool installed:
 
-- JSON to CSV or YAML, and CSV to JSON.
+- JSON to CSV or YAML, and CSV to JSON. Nothing is dropped or changed: every column keeps a name
+  of its own (`id`, `id_2`; an empty header cell becomes `column2`), and numbers keep their digits
+  (9007199254740993 stays exact).
 - PNG, JPG, WebP, GIF, BMP, AVIF, ICO and SVG to PNG, JPG or WebP, with the editor's own image
   decoder and encoder. A tab "Converter Studio: converting images" is open while it works.
 
 **With the tools you have installed** (each one adds its formats to the picker):
 
-| Tool        | What it converts                                                                                                               |
-| ----------- | ------------------------------------------------------------------------------------------------------------------------------ |
-| FFmpeg      | Video to MP4, WebM, MOV, MKV, AVI or GIF; video or audio to MP3, WAV, M4A, AAC, FLAC, OGG or Opus; GIF to MP4 or WebM          |
-| LibreOffice | Word, ODT and RTF to each other, PDF or text; Excel, ODS and CSV to each other or PDF; PowerPoint and ODP to each other or PDF |
-| Pandoc      | Markdown, HTML, DOCX, ODT and EPUB to Markdown, HTML, DOCX, ODT, EPUB, RTF or plain text                                       |
-| ImageMagick | Images, also to TIFF, AVIF, GIF, BMP and ICO; HEIC photos and camera RAW when your ImageMagick reads them                      |
-| Ghostscript | A smaller PDF; the text of a PDF                                                                                               |
-| Tesseract   | The words in an image (OCR); with Ghostscript, the words of a scanned PDF                                                      |
+| Tool                   | What it converts                                                                                                               |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| FFmpeg                 | Video to MP4, WebM, MOV, MKV, AVI or GIF; video or audio to MP3, WAV, M4A, AAC, FLAC, OGG or Opus; GIF to MP4 or WebM          |
+| LibreOffice            | Word, ODT and RTF to each other, PDF or text; Excel, ODS and CSV to each other or PDF; PowerPoint and ODP to each other or PDF |
+| Pandoc                 | Markdown, HTML, DOCX, ODT and EPUB to Markdown, HTML, DOCX, ODT, EPUB, RTF or plain text                                       |
+| Pandoc and LibreOffice | Markdown to PDF: Pandoc writes a Word file, LibreOffice makes the PDF of it (no LaTeX needed)                                  |
+| ImageMagick            | Images, also to TIFF, AVIF, GIF, BMP and ICO; HEIC photos and camera RAW when your ImageMagick reads them                      |
+| Ghostscript            | A smaller PDF; the text of a PDF                                                                                               |
+| Tesseract              | The words in an image (OCR); with Ghostscript, the words of a scanned PDF                                                      |
 
 The extension finds them on your PATH and in their usual install folders (Homebrew,
 `LibreOffice.app`, Program Files, winget, Chocolatey, Scoop). **Converter Studio: Show Tools on

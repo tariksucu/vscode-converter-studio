@@ -10,8 +10,13 @@ import type { Tool, ToolId, Toolbox } from './tools';
  * is an array of arguments, never a shell string.
  */
 
-/** What does a conversion on the computer: a tool, or the extension itself. */
-export type Engine = ToolId | 'data' | 'canvas';
+/**
+ * What does a conversion on the computer: a tool, two tools one after the other (Pandoc writes a
+ * Word file, LibreOffice makes the PDF of it), or the extension itself.
+ */
+export type Engine = ToolId | 'pandoc+soffice' | 'data' | 'canvas';
+/** The engines that run tools. */
+export type ToolEngine = Exclude<Engine, 'data' | 'canvas'>;
 
 /** A second kind of conversion to the same format: a smaller PDF, or text recognition. */
 export type Variant = 'compress' | 'ocr';
@@ -23,6 +28,7 @@ export const ENGINE_NAMES: Readonly<Record<Engine, string>> = {
   magick: 'ImageMagick',
   gs: 'Ghostscript',
   tesseract: 'Tesseract',
+  'pandoc+soffice': 'Pandoc + LibreOffice',
   data: 'built in',
   canvas: 'built in',
 };
@@ -214,7 +220,7 @@ function magickDoes(from: string, to: string, tool: Tool | undefined): boolean {
 /**
  * What converts `from` to `to` on this computer, or null. When several could, the one that does
  * it best: ImageMagick before the built-in image encoder, LibreOffice for Office formats and PDF,
- * Pandoc for Markdown, HTML, EPUB and plain text.
+ * Pandoc for Markdown, HTML, EPUB and plain text, and the two together for Markdown to PDF.
  */
 export function engineFor(
   from: string,
@@ -241,6 +247,8 @@ export function engineFor(
   if (markup && tools.pandoc && (pandocFirst || !office || !tools.soffice)) return 'pandoc';
   if (office && tools.soffice) return 'soffice';
   if (markup && tools.pandoc) return 'pandoc';
+  // Markdown to PDF without LaTeX: Pandoc writes a Word file, LibreOffice makes the PDF of it.
+  if (from === 'md' && to === 'pdf' && tools.pandoc && tools.soffice) return 'pandoc+soffice';
   if (from === 'pdf' && to === 'txt' && tools.gs) return 'gs';
   return null;
 }
@@ -522,8 +530,8 @@ export function gsArgs(job: Job, output: string): string[] {
   return [...base, '-sDEVICE=txtwrite', `-sOutputFile=${gsName(output)}`, job.input];
 }
 
-/** The steps of a conversion with a tool. */
-export function planFor(engine: ToolId, job: Job, tools: Toolbox): Plan {
+/** The steps of a conversion with a tool (or two). */
+export function planFor(engine: ToolEngine, job: Job, tools: Toolbox): Plan {
   const output = join(job.work, `result.${job.to}`);
   switch (engine) {
     case 'ffmpeg':
@@ -545,6 +553,24 @@ export function planFor(engine: ToolId, job: Job, tools: Toolbox): Plan {
         steps: [{ tool: 'pandoc', args: pandocArgs(job, output), cwd: dirname(job.input) }],
         output: { file: output },
       };
+    case 'pandoc+soffice': {
+      // The Word file goes in a folder of its own; LibreOffice names the PDF after it.
+      const step = join(job.work, 'docx');
+      const docx = join(step, `${job.title || 'document'}.docx`);
+      const outdir = join(job.work, 'out');
+      return {
+        steps: [
+          { makeFolder: step },
+          {
+            tool: 'pandoc',
+            args: pandocArgs({ ...job, to: 'docx' }, docx),
+            cwd: dirname(job.input),
+          },
+          { tool: 'soffice', args: sofficeArgs({ ...job, input: docx, from: 'docx' }, outdir) },
+        ],
+        output: { onlyFileIn: outdir },
+      };
+    }
     case 'magick':
       return {
         steps: [{ tool: 'magick', args: magickArgs(job, output) }],

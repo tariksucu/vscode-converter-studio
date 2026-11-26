@@ -23,7 +23,7 @@ export const TOOL_USES: Readonly<Record<ToolId, string>> = {
   ffmpeg: 'video and audio: MP4, WebM, MOV, MKV, AVI, GIF, MP3, WAV, M4A, AAC, FLAC, OGG, Opus',
   soffice:
     'Office documents, spreadsheets and slides: to and from PDF, DOCX, ODT, XLSX, CSV, PPTX…',
-  pandoc: 'Markdown, HTML, DOCX, ODT, EPUB, RTF and plain text',
+  pandoc: 'Markdown, HTML, DOCX, ODT, EPUB, RTF and plain text; with LibreOffice, Markdown to PDF',
   magick:
     'images: JPG, PNG, WebP, AVIF, GIF, TIFF, BMP, ICO, SVG; HEIC and camera RAW when built in',
   gs: 'PDF: smaller files, and the text of a PDF',
